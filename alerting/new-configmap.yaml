@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting
+data:
+  alerting.yaml: |-
+    apiVersion: v1
+    contactPoints:
+      - orgId: 1
+        name: grafana-default-email
+        receivers:
+          - uid: grafana-default-email
+            type: email
+            disableResolveMessage: true
+            settings:
+              addresses: "EMAIL_ADDRESSES"
+    groups:
+      - orgId: 1
+        name: security_events
+        folder: Security
+        interval: 60s
+        rules:
+          - expr: ''
+            uid: attack01
+            for: EVALTIME
+            id: 2
+            orgId: 1
+            title: More than THRESHOLD attacks from single IP in MINUTES minutes
+            condition: C
+            data:
+            - refId: A
+              queryType: range
+              relativeTimeRange:
+                from: TIMERANGE
+                to: 0
+              datasourceUid: '3100'
+              model:
+                editorMode: code
+                expr: sum by (attacker, Server, server) (count_over_time({job="ingress-controller/ingress-nginx"}|= "transaction" |= "severity" |= "match" |= "ruleId" | json attacker="transaction.client_ip", time="transaction.time_stamp", Server="transaction.request.headers.Host", server="transaction.request.headers.host", tags="transaction.messages[0][\"details\"][\"tags\"]", severity="transaction.messages[0][\"details\"][\"severity\"]", file="transaction.messages[0][\"details\"][\"file\"]", uri="transaction.request.uri", body="transaction.request.body", method="transaction.request.method", headers="transaction.request.headers", ruleid="transaction.messages[0][\"details\"][\"ruleId\"]", debug_ruleid="transaction.messages[1][\"details\"][\"ruleId\"]", message="transaction.messages[0].message", debug_message="transaction.messages[1].message", status_code="transaction.response.http_code" | ruleid != "" | status_code = "403" | __error__="" [$__interval]))
+                hide: false
+                intervalMs: 1000
+                legendFormat: "{{attacker}} {{Server}} {{server}}"
+                maxDataPoints: 43200
+                queryType: range
+                refId: A
+            - refId: B
+              queryType: ''
+              relativeTimeRange:
+                from: 0
+                to: 0
+              datasourceUid: "-100"
+              model:
+                conditions:
+                - evaluator:
+                    params:
+                    - 5
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                    - A
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+                datasource:
+                  type: __expr__
+                  uid: "-100"
+                downsampler: count
+                expression: A
+                hide: false
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: count
+                refId: B
+                type: reduce
+                upsampler: fillna
+            - refId: C
+              queryType: ''
+              relativeTimeRange:
+                from: 0
+                to: 0
+              datasourceUid: "-100"
+              model:
+                conditions:
+                - evaluator:
+                    params:
+                    - 0
+                    - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                    - B
+                  reducer:
+                    params: []
+                    type: avg
+                  type: query
+                datasource:
+                  name: Expression
+                  type: __expr__
+                  uid: __expr__
+                expression: "$B >= THRESHOLD"
+                hide: false
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: math
+            intervalSeconds: 60
+            rule_group: Alerts
+            noDataState: OK
+            execErrState: OK
+       

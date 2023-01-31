@@ -1,0 +1,365 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    grafana_dashboard: "1"
+  name: security-dashboard
+  namespace: monitoring-system
+data:
+  security-dashboard.json: |-
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "target": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            },
+            "type": "dashboard"
+          }
+        ]
+      },
+      "description": "",
+      "editable": false,
+      "fiscalYearStartMonth": 0,
+      "gnetId": 15495,
+      "graphTooltip": 0,
+      "links": [
+        {
+          "asDropdown": true,
+          "icon": "external link",
+          "includeVars": false,
+          "keepTime": false,
+          "tags": [],
+          "targetBlank": false,
+          "title": "Dashboards",
+          "tooltip": "",
+          "type": "dashboards",
+          "url": ""
+        }
+      ],
+      "liveNow": false,
+      "panels": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "continuous-BlYlRd"
+              },
+              "decimals": 0,
+              "mappings": [],
+              "min": 0,
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 6,
+            "x": 0,
+            "y": 0
+          },
+          "id": 8,
+          "maxDataPoints": 1,
+          "options": {
+            "displayMode": "gradient",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "sum"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showUnfilled": true,
+            "text": {}
+          },
+          "pluginVersion": "9.1.4",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "editorMode": "code",
+              "expr": "sum by (attacker) (count_over_time({job=\"ingress-controller/ingress-nginx\"} |= \"transaction\" |= \"severity\" |= \"match\" |= \"ruleId\" | json attacker=\"transaction.client_ip\", time=\"transaction.time_stamp\", Server=\"transaction.request.headers.Host\", server=\"transaction.request.headers.host\", tags=\"transaction.messages[0][\\\"details\\\"][\\\"tags\\\"]\", severity=\"transaction.messages[0][\\\"details\\\"][\\\"severity\\\"]\", file=\"transaction.messages[0][\\\"details\\\"][\\\"file\\\"]\", uri=\"transaction.request.uri\", body=\"transaction.request.body\", method=\"transaction.request.method\", headers=\"transaction.request.headers\", ruleid=\"transaction.messages[0][\\\"details\\\"][\\\"ruleId\\\"]\", debug_ruleid=\"transaction.messages[1][\\\"details\\\"][\\\"ruleId\\\"]\", message=\"transaction.messages[0].message\", debug_message=\"transaction.messages[1].message\", status_code=\"transaction.response.http_code\" | ruleid != \"\" | status_code = \"403\" | __error__=\"\" [$__interval]))",
+              "legendFormat": "{{attacker}}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Attackers",
+          "transformations": [],
+          "transparent": true,
+          "type": "bargauge"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 32,
+                "gradientMode": "hue",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": 3600000,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 9,
+            "x": 6,
+            "y": 0
+          },
+          "id": 7,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "none",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "9.1.4",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "editorMode": "code",
+              "expr": "sum by (attacker) (count_over_time({job=\"ingress-controller/ingress-nginx\"} |= \"transaction\" |= \"severity\" |= \"match\" |= \"ruleId\" | json attacker=\"transaction.client_ip\", time=\"transaction.time_stamp\", Server=\"transaction.request.headers.Host\", server=\"transaction.request.headers.host\", tags=\"transaction.messages[0][\\\"details\\\"][\\\"tags\\\"]\", severity=\"transaction.messages[0][\\\"details\\\"][\\\"severity\\\"]\", file=\"transaction.messages[0][\\\"details\\\"][\\\"file\\\"]\", uri=\"transaction.request.uri\", body=\"transaction.request.body\", method=\"transaction.request.method\", headers=\"transaction.request.headers\", ruleid=\"transaction.messages[0][\\\"details\\\"][\\\"ruleId\\\"]\", debug_ruleid=\"transaction.messages[1][\\\"details\\\"][\\\"ruleId\\\"]\", message=\"transaction.messages[0].message\", debug_message=\"transaction.messages[1].message\", status_code=\"transaction.response.http_code\" | ruleid != \"\" | status_code = \"403\" | __error__=\"\" [$__interval]))",
+              "legendFormat": "{{attacker}}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "title": "Activity Per Attacker",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "continuous-BlYlRd"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 22,
+            "w": 9,
+            "x": 15,
+            "y": 0
+          },
+          "id": 5,
+          "maxDataPoints": 10,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "sum"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {
+              "titleSize": 14
+            },
+            "textMode": "value_and_name"
+          },
+          "pluginVersion": "9.1.4",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "editorMode": "code",
+              "expr": "sum by (message, ruleid) (count_over_time({job=\"ingress-controller/ingress-nginx\"} |= \"transaction\" |= \"severity\" |= \"match\" |= \"ruleId\" | json attacker=\"transaction.client_ip\", time=\"transaction.time_stamp\", Server=\"transaction.request.headers.Host\", server=\"transaction.request.headers.host\", tags=\"transaction.messages[0][\\\"details\\\"][\\\"tags\\\"]\", severity=\"transaction.messages[0][\\\"details\\\"][\\\"severity\\\"]\", file=\"transaction.messages[0][\\\"details\\\"][\\\"file\\\"]\", uri=\"transaction.request.uri\", body=\"transaction.request.body\", method=\"transaction.request.method\", headers=\"transaction.request.headers\", ruleid=\"transaction.messages[0][\\\"details\\\"][\\\"ruleId\\\"]\", debug_ruleid=\"transaction.messages[1][\\\"details\\\"][\\\"ruleId\\\"]\", message=\"transaction.messages[0].message\", debug_message=\"transaction.messages[1].message\", status_code=\"transaction.response.http_code\" | ruleid != \"\" | status_code = \"403\" | __error__=\"\" [$__interval]))",
+              "legendFormat": "{{ruleid}} {{message}}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "RuleIDs",
+          "transformations": [],
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "gridPos": {
+            "h": 13,
+            "w": 15,
+            "x": 0,
+            "y": 9
+          },
+          "id": 4,
+          "options": {
+            "dedupStrategy": "none",
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "editorMode": "code",
+              "expr": "{job=\"ingress-controller/ingress-nginx\"} |= \"transaction\" |= \"severity\" |= \"match\" |= \"ruleId\" | json attacker=\"transaction.client_ip\", time=\"transaction.time_stamp\", Server=\"transaction.request.headers.Host\", server=\"transaction.request.headers.host\", tags=\"transaction.messages[0][\\\"details\\\"][\\\"tags\\\"]\", severity=\"transaction.messages[0][\\\"details\\\"][\\\"severity\\\"]\", file=\"transaction.messages[0][\\\"details\\\"][\\\"file\\\"]\", uri=\"transaction.request.uri\", body=\"transaction.request.body\", method=\"transaction.request.method\", headers=\"transaction.request.headers\", ruleid=\"transaction.messages[0][\\\"details\\\"][\\\"ruleId\\\"]\", debug_ruleid=\"transaction.messages[1][\\\"details\\\"][\\\"ruleId\\\"]\", message=\"transaction.messages[0].message\", debug_message=\"transaction.messages[1].message\", status_code=\"transaction.response.http_code\" | ruleid != \"\" | status_code = \"403\" | __error__=\"\"\n\n| line_format \"➡️ RuleId: {{.ruleid}} {{.message}}\\n🌐 {{.server}}{{.Server}} {{.method}} {{.uri}}\\n️☠️ Client: {{.attacker}}️\\n🏷️ [tag {{.tags}}]\\n🧰 ➡️ RuleId: {{.debug_ruleid}} {{.debug_message}}\"",
+              "hide": false,
+              "queryType": "range",
+              "refId": "B"
+            }
+          ],
+          "title": "ModSec Logs",
+          "transformations": [
+            {
+              "id": "groupBy",
+              "options": {
+                "fields": {
+                  "Time": {
+                    "aggregations": []
+                  },
+                  "Time ns": {
+                    "aggregations": []
+                  }
+                }
+              }
+            }
+          ],
+          "transparent": true,
+          "type": "logs"
+        }
+      ],
+      "refresh": "1m",
+      "schemaVersion": 37,
+      "style": "dark",
+      "tags": [],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-12h",
+        "to": "now"
+      },
+      "timepicker": {},
+      "timezone": "",
+      "title": "Security Dashboard",
+      "uid": "7WDaPG87",
+      "version": 1,
+      "weekStart": ""
+    }

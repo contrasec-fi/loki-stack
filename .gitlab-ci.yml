@@ -1,0 +1,99 @@
+stages:
+- uninstall
+- deploy
+
+uninstall_grafana:
+  tags:
+  - profirator
+  stage: uninstall
+  image: dtzar/helm-kubectl
+  variables:
+    KUBE: "$KUBECONFIG"
+  script:
+      - echo "$KUBE" > "$(pwd)/kube.config"
+      - echo "Uninstalling monitoring..."
+      - helm uninstall monitoring -n monitoring-system --kubeconfig "$(pwd)/kube.config"
+  when: manual
+
+uninstall_loki:
+  tags:
+  - profirator
+  stage: uninstall
+  image: dtzar/helm-kubectl
+  variables:
+    KUBE: "$KUBECONFIG"
+  script:
+      - echo "$KUBE" > "$(pwd)/kube.config"
+      - echo "Uninstalling Loki Stack..."
+      - helm uninstall loki-stack -n monitoring-system --kubeconfig "$(pwd)/kube.config"
+  when: manual
+
+.deploy_template: &deploy_template
+  tags:
+  - profirator
+  stage: deploy
+  image: dtzar/helm-kubectl
+  script:
+      - echo "$KUBE" > "$(pwd)/kube.config"
+      # Mandatory file modifications
+      - echo "Setting threshold & time..."
+      - sed -i "s/THRESHOLD/${THRESHOLD}/g" ./alerting/new-configmap.yaml
+      - sed -i "s/MINUTES/${TIMERANGE}/g" ./alerting/new-configmap.yaml
+      - export EVALTIME_STRING=$(($EVALTIME))m
+      - sed -i "s/EVALTIME/${EVALTIME_STRING}/g" ./alerting/new-configmap.yaml
+      - export TIMERANGESECONDS=$(($TIMERANGE*60))
+      - sed -i "s/TIMERANGE/${TIMERANGESECONDS}/g" ./alerting/new-configmap.yaml
+      - sed -i "s/EMAIL_ADDRESSES/${EMAILADDRESSES}/g" ./alerting/new-configmap.yaml
+      # SMTP Configuration
+      - echo "Setting SMTP Configuration..."
+      - sed -i "s/EMAIL_SECURITY_COMPONENT_HOST_PORT/${EMAILSECURITYCOMPONENTHOSTPORT}/g" ./values/monitoring-configmap.yaml
+      - sed -i "s/EMAIL_SECURITY_COMPONENT_USER/${EMAILSECURITYCOMPONENTUSER}/g" ./values/monitoring-configmap.yaml
+      - sed -i "s/EMAIL_SECURITY_COMPONENT_PASSWORD/${EMAILSECURITYCOMPONENTPASSWORD}/g" ./values/monitoring-configmap.yaml
+      - sed -i "s/EMAIL_SECURITY_COMPONENT/${EMAILSECURITYCOMPONENT}/g" ./values/monitoring-configmap.yaml
+      # Admin credentials
+      - sed -i "s/prom-operator/${GRAFANA_ADMIN_PASSWORD}/g" ./values/39-monitoring-values.yaml
+
+      # Install KubePromStack
+      - echo "Adding repository..."
+      - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --kubeconfig "$(pwd)/kube.config"
+      - helm repo update --kubeconfig "$(pwd)/kube.config"
+      - echo "Installing Monitoring System..."
+      - helm upgrade --install monitoring prometheus-community/kube-prometheus-stack -n monitoring-system -f ./values/39-monitoring-values.yaml --version=39.13.3 --kubeconfig "$(pwd)/kube.config"
+      - kubectl -n monitoring-system apply -f ./values/monitoring-configmap.yaml --kubeconfig "$(pwd)/kube.config"
+      - kubectl -n monitoring-system apply -f ./alerting/new-configmap.yaml --kubeconfig "$(pwd)/kube.config"
+      - kubectl -n monitoring-system apply -f ./alerting/datasource-configmap.yaml --kubeconfig "$(pwd)/kube.config"
+      - kubectl -n monitoring-system apply -f ./dashboards/security_dashboard_configmap.yaml --kubeconfig "$(pwd)/kube.config"      
+      
+      # Loki-Stack
+      - echo "Adding repository..."
+      - helm repo add grafana https://grafana.github.io/helm-charts --kubeconfig "$(pwd)/kube.config"
+      - helm repo update --kubeconfig "$(pwd)/kube.config"
+      - echo "Installing Loki Stack..."
+      - helm upgrade --install loki-stack --namespace monitoring-system --set loki.persistence.enabled=true,loki.persistence.size=10Gi --set loki.isDefault=false -f ./values/loki-stack-values.yaml --version=2.8.7 grafana/loki-stack --kubeconfig "$(pwd)/kube.config"
+
+      - echo "Applying Configmaps..."
+      - kubectl -n monitoring-system apply -f ./values/monitoring-configmap.yaml --kubeconfig "$(pwd)/kube.config"
+      #- echo "Applying ingresses..."
+      #- kubectl -n monitoring-system apply -f ./values/grafana-ingress.yaml --kubeconfig "$(pwd)/kube.config"
+      - echo "Restarting Grafana..."
+      - kubectl -n monitoring-system rollout restart deployment monitoring-grafana --kubeconfig "$(pwd)/kube.config"
+
+do deploy staging:
+  <<: *deploy_template
+  variables:
+    KUBE: "$KUBECONFIG"
+    # SMTP variables
+    EMAILSECURITYCOMPONENTHOSTPORT: $EMAIL_SECURITY_COMPONENT_HOST_PORT
+    EMAILSECURITYCOMPONENT: $EMAIL_SECURITY_COMPONENT
+    EMAILSECURITYCOMPONENTUSER: $EMAIL_SECURITY_COMPONENT_USER
+    EMAILSECURITYCOMPONENTPASSWORD: $EMAIL_SECURITY_COMPONENT_PASSWORD
+    # Alert variables
+    THRESHOLD: 10 # Number of attacks per IP addresses to alert
+    TIMERANGE: 15 # Minutes | Defines the time range from now and defined timerange
+    EVALTIME: 10 # Minutes | Must be TIMERANGE-3 MAXIMUM e.g. 15-3=12
+    EMAILADDRESSES: $EMAILSECURITYCOMPONENT # Send alerts with email. example= "example@domain.de; security@domain.de;"
+    # Other variables
+    GRAFANA_ADMIN_PASSWORD: $SECURITY_COMPONENT_GRAFANA_PASSWORD
+  only:
+    - /^odala-staging./
+
