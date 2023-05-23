@@ -37,13 +37,13 @@ uninstall_loki:
       - echo "$KUBE" > "$(pwd)/kube.config"
       # Mandatory file modifications
       - echo "Setting threshold & time..."
-      - sed -i "s/THRESHOLD/${THRESHOLD}/g" ./alerting/new-configmap.yaml
-      - sed -i "s/MINUTES/${TIMERANGE}/g" ./alerting/new-configmap.yaml
+      - sed -i "s/THRESHOLD/${THRESHOLD}/g" ./alerting/configmap.yaml
+      - sed -i "s/MINUTES/${TIMERANGE}/g" ./alerting/configmap.yaml
       - export EVALTIME_STRING=$(($EVALTIME))m
-      - sed -i "s/EVALTIME/${EVALTIME_STRING}/g" ./alerting/new-configmap.yaml
+      - sed -i "s/EVALTIME/${EVALTIME_STRING}/g" ./alerting/configmap.yaml
       - export TIMERANGESECONDS=$(($TIMERANGE*60))
-      - sed -i "s/TIMERANGE/${TIMERANGESECONDS}/g" ./alerting/new-configmap.yaml
-      - sed -i "s/EMAIL_ADDRESSES/${EMAILADDRESSES}/g" ./alerting/new-configmap.yaml
+      - sed -i "s/TIMERANGE/${TIMERANGESECONDS}/g" ./alerting/configmap.yaml
+      - sed -i "s/EMAIL_ADDRESSES/${EMAILADDRESSES}/g" ./alerting/configmap.yaml
       # SMTP Configuration
       - echo "Setting SMTP Configuration..."
       - sed -i "s/EMAIL_SECURITY_COMPONENT_HOST_PORT/${EMAILSECURITYCOMPONENTHOSTPORT}/g" ./values/monitoring-configmap.yaml
@@ -51,16 +51,16 @@ uninstall_loki:
       - sed -i "s/EMAIL_SECURITY_COMPONENT_PASSWORD/${EMAILSECURITYCOMPONENTPASSWORD}/g" ./values/monitoring-configmap.yaml
       - sed -i "s/EMAIL_SECURITY_COMPONENT/${EMAILSECURITYCOMPONENT}/g" ./values/monitoring-configmap.yaml
       # Admin credentials
-      - sed -i "s/prom-operator/${GRAFANA_ADMIN_PASSWORD}/g" ./values/39-monitoring-values.yaml
+      - sed -i "s/prom-operator/${GRAFANA_ADMIN_PASSWORD}/g" ./values/monitoring-values.yaml
 
       # Install KubePromStack
       - echo "Adding repository..."
       - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --kubeconfig "$(pwd)/kube.config"
       - helm repo update --kubeconfig "$(pwd)/kube.config"
       - echo "Installing Monitoring System..."
-      - helm upgrade --install monitoring prometheus-community/kube-prometheus-stack -n monitoring-system -f ./values/39-monitoring-values.yaml --version=39.13.3 --kubeconfig "$(pwd)/kube.config"
+      - helm upgrade --install monitoring prometheus-community/kube-prometheus-stack -n monitoring-system -f ./values/monitoring-values.yaml --version=39.13.3 --kubeconfig "$(pwd)/kube.config"
       - kubectl -n monitoring-system apply -f ./values/monitoring-configmap.yaml --kubeconfig "$(pwd)/kube.config"
-      - kubectl -n monitoring-system apply -f ./alerting/new-configmap.yaml --kubeconfig "$(pwd)/kube.config"
+      - kubectl -n monitoring-system apply -f ./alerting/configmap.yaml --kubeconfig "$(pwd)/kube.config"
       - kubectl -n monitoring-system apply -f ./alerting/datasource-configmap.yaml --kubeconfig "$(pwd)/kube.config"
       - kubectl -n monitoring-system apply -f ./dashboards/security_dashboard_configmap.yaml --kubeconfig "$(pwd)/kube.config"      
       
