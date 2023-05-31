@@ -39,6 +39,7 @@ uninstall_loki:
       - echo "Setting threshold & time..."
       - sed -i "s/THRESHOLD/${THRESHOLD}/g" ./alerting/configmap.yaml
       - sed -i "s/MINUTES/${TIMERANGE}/g" ./alerting/configmap.yaml
+      - export EVALTIME=$(($TIMERANGE - 3))
       - export EVALTIME_STRING=$(($EVALTIME))m
       - sed -i "s/EVALTIME/${EVALTIME_STRING}/g" ./alerting/configmap.yaml
       - export TIMERANGESECONDS=$(($TIMERANGE*60))
@@ -90,7 +91,6 @@ do deploy staging:
     # Alert variables
     THRESHOLD: 10 # Number of attacks per IP addresses to alert
     TIMERANGE: 15 # Minutes | Defines the time range from now and defined timerange
-    EVALTIME: 10 # Minutes | Must be TIMERANGE-3 MAXIMUM e.g. 15-3=12
     EMAILADDRESSES: $EMAILSECURITYCOMPONENT # Send alerts with email. example= "example@domain.de; security@domain.de;"
     # Other variables
     GRAFANA_ADMIN_PASSWORD: $SECURITY_COMPONENT_GRAFANA_PASSWORD
